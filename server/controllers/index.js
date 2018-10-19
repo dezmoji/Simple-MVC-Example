@@ -2,19 +2,27 @@
 const models = require('../models');
 
 const Cat = models.Cat.CatModel;
+const Dog = models.Dog.DogModel;
 
 // default fake data so that we have something to work with until we make a real Cat
-const defaultData = {
+const defaultCatData = {
   name: 'unknown',
   bedsOwned: 0,
 };
 
-// object for us to keep track of the last Cat we made and dynamically update it sometimes
-let lastAdded = new Cat(defaultData);
+const defaultDogData ={
+  name: 'unknown',
+  breed: 'unknown',
+  age: 0,
+};
+
+// object for us to keep track of the last Cat and Dog we made and dynamically update it sometimes
+let lastCatAdded = new Cat(defaultCatData);
+let lastDogAdded = new Dog(defaultDogData);
 
 const hostIndex = (req, res) => {
   res.render('index', {
-    currentName: lastAdded.name,
+    currentName: lastCatAdded.name,
     title: 'Home',
     pageName: 'Home Page',
   });
@@ -22,6 +30,11 @@ const hostIndex = (req, res) => {
 
 const readAllCats = (req, res, callback) => {
   Cat.find(callback);
+};
+
+///////////////////////////
+const readAllDogs = (req, res, callback) =>{
+  Dog.find(callback);
 };
 
 const readCat = (req, res) => {
@@ -58,9 +71,23 @@ const hostPage3 = (req, res) => {
   res.render('page3');
 };
 
-const getName = (req, res) => {
-  res.json({ name: lastAdded.name });
+const hostPage4 = (req,res) =>{
+  const callback = (err, docs) => {
+    if (err) {
+      return res.json({ err }); // if error, return it
+    }
+
+    return res.render('page4', { dogs: docs });
+  };
+
+  readAllDogs(req, res, callback);
 };
+
+const getName = (req, res) => {
+  res.json({ name: lastCatAdded.name });
+};
+
+
 
 const setName = (req, res) => {
   if (!req.body.firstname || !req.body.lastname || !req.body.beds) {
@@ -80,8 +107,33 @@ const setName = (req, res) => {
   const savePromise = newCat.save();
 
   savePromise.then(() => {
-    lastAdded = newCat;
-    res.json({ name: lastAdded.name, beds: lastAdded.bedsOwned });
+    lastCatAdded = newCat;
+    res.json({ name: lastCatAdded.name, beds: lastCatAdded.bedsOwned });
+  });
+
+  savePromise.catch(err => res.json({ err }));
+
+  return res;
+};
+
+const setDogName = (req, res) => {
+  if (!req.body.name || !req.body.breed || !req.body.age) {
+    return res.status(400).json({ error: 'name, breed, and age are all required' });
+  }
+
+  const dogData = {
+    name: req.body.name,
+    breed: req.body.breed,
+    age: req.body.age
+  };
+
+  const newDog = new Dog(dogData);
+
+  const savePromise = newDog.save();
+
+  savePromise.then(() => {
+    lastDogAdded = newDog;
+    res.json({ name: lastDogAdded.name, breed: lastDogAdded.breed, age: lastDogAdded.age });
   });
 
   savePromise.catch(err => res.json({ err }));
@@ -108,12 +160,35 @@ const searchName = (req, res) => {
   });
 };
 
+const searchDogName = (req, res) => {
+  if (!req.query.name) {
+    return res.json({ error: 'Name is required to perform a search' });
+  }
+
+  return Dog.findByName(req.query.name, (err, doc) => {
+    if (err) {
+      return res.json({ err }); // if error, return it
+    }
+
+    if (!doc) {
+      return res.json({ error: 'No dogs found' });
+    }
+
+    doc.age++;
+    const searchDog = new Dog(doc);
+    const savePromise = searchDog.save();
+
+    savePromise.then(() => res.json({ name: searchDog.name, breed: searchDog.breed, age:searchDog.age }));
+    savePromise.catch(err => res.json({ err })); 
+  });
+};
+
 const updateLast = (req, res) => {
-  lastAdded.bedsOwned++;
+  lastCatAdded.bedsOwned++;
 
-  const savePromise = lastAdded.save();
+  const savePromise = lastCatAdded.save();
 
-  savePromise.then(() => res.json({ name: lastAdded.name, beds: lastAdded.bedsOwned }));
+  savePromise.then(() => res.json({ name: lastCatAdded.name, beds: lastCatAdded.bedsOwned }));
 
   savePromise.catch(err => res.json({ err }));
 };
@@ -129,10 +204,13 @@ module.exports = {
   page1: hostPage1,
   page2: hostPage2,
   page3: hostPage3,
+  page4: hostPage4,
   readCat,
   getName,
   setName,
+  setDogName,
   updateLast,
   searchName,
+  searchDogName,
   notFound,
 };

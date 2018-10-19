@@ -10,7 +10,7 @@ const defaultCatData = {
   bedsOwned: 0,
 };
 
-const defaultDogData ={
+const defaultDogData = {
   name: 'unknown',
   breed: 'unknown',
   age: 0,
@@ -32,8 +32,8 @@ const readAllCats = (req, res, callback) => {
   Cat.find(callback);
 };
 
-///////////////////////////
-const readAllDogs = (req, res, callback) =>{
+// /////////////////////////
+const readAllDogs = (req, res, callback) => {
   Dog.find(callback);
 };
 
@@ -71,7 +71,7 @@ const hostPage3 = (req, res) => {
   res.render('page3');
 };
 
-const hostPage4 = (req,res) =>{
+const hostPage4 = (req, res) => {
   const callback = (err, docs) => {
     if (err) {
       return res.json({ err }); // if error, return it
@@ -86,7 +86,6 @@ const hostPage4 = (req,res) =>{
 const getName = (req, res) => {
   res.json({ name: lastCatAdded.name });
 };
-
 
 
 const setName = (req, res) => {
@@ -124,7 +123,7 @@ const setDogName = (req, res) => {
   const dogData = {
     name: req.body.name,
     breed: req.body.breed,
-    age: req.body.age
+    age: req.body.age,
   };
 
   const newDog = new Dog(dogData);
@@ -174,12 +173,15 @@ const searchDogName = (req, res) => {
       return res.json({ error: 'No dogs found' });
     }
 
-    doc.age++;
-    const searchDog = new Dog(doc);
+    const searchDog = new Dog({ name: doc.name, breed: doc.breed, age: doc.age });
+    searchDog.age++;
     const savePromise = searchDog.save();
 
-    savePromise.then(() => res.json({ name: searchDog.name, breed: searchDog.breed, age:searchDog.age }));
-    savePromise.catch(err => res.json({ err })); 
+    savePromise.then(() => res.json({ name: searchDog.name,
+      breed: searchDog.breed,
+      age: searchDog.age }));
+    savePromise.catch(err2 => res.json({ err2 }));
+    return res.json({ name: searchDog.name, breed: searchDog.breed, age: searchDog.age });
   });
 };
 
